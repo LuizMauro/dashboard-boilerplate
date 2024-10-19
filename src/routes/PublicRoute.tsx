@@ -1,17 +1,38 @@
-import { ReactElement } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "@/pages/public/Login";
+import Home from "@/pages/public/Home";
 
-interface PublicRouteProps {
-  children: ReactElement;
+interface IRoute {
+  path: string;
+  component: React.ReactNode;
 }
 
-export function PublicRoute({ children }: PublicRouteProps): ReactElement {
-  const { user } = useAuth();
+const routes: IRoute[] = [
+  {
+    path: "/",
+    component: <Home />,
+  },
+  {
+    path: "/login",
+    component: <Login />,
+  },
+  {
+    path: "*",
+    component: <Navigate to="/login" />,
+  },
+];
 
-  if (user) {
-    return <Navigate to="/dashboard" />;
-  }
-
-  return children;
+function RouteWithSubRoutes(route: IRoute, key: number) {
+  return <Route key={key} path={route.path} element={route.component} />;
 }
+
+function PublicRoutes() {
+  return (
+    <div>
+      <Routes>{routes.map((route, i) => RouteWithSubRoutes(route, i))}</Routes>
+    </div>
+  );
+}
+
+export default PublicRoutes;

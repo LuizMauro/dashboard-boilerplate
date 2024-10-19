@@ -1,19 +1,32 @@
-import { ReactElement } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-import { LayoutDashboard } from "@/layout/dashboard";
+import Dashboard from "@/pages/private/dashboard";
 
-interface PrivateRouteProps {
-  children: ReactElement;
+interface IRoute {
+  path: string;
+  component: React.ReactNode;
 }
 
-export function PrivateRoute({ children }: PrivateRouteProps): ReactElement {
-  const { user } = useAuth();
+const routes: IRoute[] = [
+  {
+    path: "/dashboard",
+    component: <Dashboard />,
+  },
+];
 
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  return <LayoutDashboard>{children}</LayoutDashboard>;
+function RenderRoutes(route: IRoute, key: number) {
+  return <Route key={key} path={route.path} element={route.component} />;
 }
+
+function PrivateRoute() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to={routes[0].path} />} />
+      {routes.map((route, i) => RenderRoutes(route, i))}
+      <Route path="*" element={<Navigate to={routes[0].path} />} />
+    </Routes>
+  );
+}
+
+export default PrivateRoute;

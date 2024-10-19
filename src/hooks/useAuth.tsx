@@ -1,79 +1,92 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import React, { createContext, useCallback, useState, useContext } from "react";
+import api from "@/http/api";
 
 interface User {
+  id: string;
   name: string;
+  email: string;
 }
 
-interface AuthContextProps {
-  user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
+interface AuthState {
+  token: string;
+  user: User;
 }
 
-const AuthContext = createContext<AuthContextProps | undefined>(undefined);
-
-interface AuthProviderProps {
-  children: ReactNode;
+interface SignInCredentials {
+  email: string;
+  password: string;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const getLocalStorage = (): User | null => {
-    const userStorage = localStorage.getItem("user");
+interface AuthContextData {
+  user: User;
+  signIn(credentials: SignInCredentials): Promise<void>;
+  signOut(): void;
+}
 
-    if (!userStorage) {
-      return null;
+const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [data, setData] = useState<AuthState>(() => {
+    const token = localStorage.getItem("@app:token");
+    const user = localStorage.getItem("@app:user");
+
+    if (token && user) {
+      api.defaults.headers.authorization = `Bearer ${token}`;
+
+      return { token, user: JSON.parse(user) };
     }
 
-    return JSON.parse(userStorage) as User;
-  };
-
-  const [user, setUser] = useState<User | null>(() => {
-    const userStorage = getLocalStorage();
-
-    return userStorage;
+    return {} as AuthState;
   });
 
-  const login = (data: User) => {
-    setUser(data);
-    saveLocalStorage(data);
-  };
+  const signIn = useCallback(async ({ email, password }: SignInCredentials) => {
+    const { data } = await api.post<{ accessToken: string }>("/auth/login", {
+      email,
+      password,
+    });
 
-  const logout = () => {
-    setUser(null);
-    removeLocalStorage();
-  };
+    if (data?.accessToken) {
+      const userProfile = await api.get<User>("/user/profile", {
+        headers: {
+          Authorization: `Bearer ${data?.accessToken}`,
+        },
+      });
 
-  const saveLocalStorage = (data: User) => {
-    localStorage.setItem("user", JSON.stringify(data));
-  };
+      if (userProfile?.data?.id) {
+        const user: User = {
+          ...userProfile.data,
+        };
 
-  const removeLocalStorage = () => {
-    localStorage.clear();
-  };
+        localStorage.setItem("@app:token", data.accessToken);
+        localStorage.setItem("@app:user", JSON.stringify(user));
 
-  useEffect(() => {
-    const userSession = getLocalStorage();
+        api.defaults.headers.authorization = `Bearer ${data.accessToken}`;
+        setData({ token: data.accessToken, user });
+      }
+    }
+  }, []);
 
-    setUser(userSession);
+  const signOut = useCallback(async () => {
+    await api.post("/auth/logout");
+    localStorage.removeItem("@app:token");
+    localStorage.removeItem("@app:user");
+    setData({} as AuthState);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user: data.user, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
+export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
