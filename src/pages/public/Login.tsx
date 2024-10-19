@@ -50,6 +50,7 @@ function Login() {
       await signIn(values);
     } catch (error) {
       console.error(error);
+
       toast({
         variant: "destructive",
         description:
@@ -60,7 +61,7 @@ function Login() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm min-w-sm">
         {/* CARD HEADER */}
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
@@ -125,7 +126,7 @@ function Login() {
 
               <div className="mt-4 text-center text-sm">
                 Não tem uma conta?{" "}
-                <Link to="#" className="underline">
+                <Link to="/register" className="underline">
                   Criar uma conta
                 </Link>
               </div>

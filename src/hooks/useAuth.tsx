@@ -17,10 +17,21 @@ interface SignInCredentials {
   password: string;
 }
 
+interface IRegister {
+  name: string;
+  email: string;
+  password: string;
+}
+
 interface AuthContextData {
   user: User;
   signIn(credentials: SignInCredentials): Promise<void>;
+  register(data: IRegister): Promise<void>;
   signOut(): void;
+}
+
+export enum MessagesEnum {
+  "User with this email already exists" = "Este e-mail já está em uso. Por favor, tente outro.",
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -75,8 +86,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setData({} as AuthState);
   }, []);
 
+  const register = useCallback(async (data: IRegister) => {
+    await api.post("/auth/register", data);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user: data.user, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ user: data.user, signIn, signOut, register }}
+    >
       {children}
     </AuthContext.Provider>
   );

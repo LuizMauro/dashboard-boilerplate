@@ -11,8 +11,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
@@ -51,6 +51,15 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    if (user) {
+      data.user.email = user.email;
+      data.user.name = user.name;
+    }
+  }, [user]);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -60,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={{ ...data.user, ...user }} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
