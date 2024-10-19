@@ -28,6 +28,7 @@ interface AuthContextData {
   signIn(credentials: SignInCredentials): Promise<void>;
   register(data: IRegister): Promise<void>;
   signOut(): void;
+  logoutLoading: boolean;
 }
 
 export enum MessagesEnum {
@@ -39,6 +40,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [logoutLoading, setlogoutLoading] = useState(false);
   const [data, setData] = useState<AuthState>(() => {
     const token = localStorage.getItem("@app:token");
     const user = localStorage.getItem("@app:user");
@@ -80,10 +82,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const signOut = useCallback(async () => {
-    await api.post("/auth/logout");
-    localStorage.removeItem("@app:token");
-    localStorage.removeItem("@app:user");
-    setData({} as AuthState);
+    try {
+      setlogoutLoading(true);
+      await api.post("/auth/logout");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      localStorage.removeItem("@app:token");
+      localStorage.removeItem("@app:user");
+      setData({} as AuthState);
+      setlogoutLoading(false);
+    }
   }, []);
 
   const register = useCallback(async (data: IRegister) => {
@@ -92,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user: data.user, signIn, signOut, register }}
+      value={{ user: data.user, signIn, signOut, register, logoutLoading }}
     >
       {children}
     </AuthContext.Provider>
