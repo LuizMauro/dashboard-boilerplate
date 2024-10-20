@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,86 +24,68 @@ import {
 import { CustomButton } from "@/components/custom-button";
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  email: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  password: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-});
+const formSchema = z
+  .object({
+    password: z
+      .string()
+      .min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
+    passwordConfirmation: z.string(),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "As senhas não coincidem.",
+    path: ["passwordConfirmation"],
+  });
 
-function Login() {
+function ResetPassword() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { resetPasswordOTP } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    mode: "onBlur",
     defaultValues: {
-      email: "",
       password: "",
+      passwordConfirmation: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signIn(values);
+      await resetPasswordOTP(values.password, location.state.resetToken);
+      toast({
+        description:
+          "Senha redefinida com sucesso, você já pode acessar utilizando sua nova senha",
+      });
+      navigate("/login");
     } catch (error) {
       console.error(error);
-
       toast({
         variant: "destructive",
         description:
-          "Falha no login. Por favor, verifique suas credenciais e tente novamente.",
+          "Houve um problema ao tentar redefinir sua senha. Por favor, tente novamente.",
       });
     }
   }
 
   return (
     <div className="flex h-screen w-full items-center justify-center px-4">
-      <Card className="mx-auto max-w-sm min-w-sm">
+      <Card className="mx-auto max-w-sm min-w-[24rem]">
         {/* CARD HEADER */}
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Insira seu e-mail abaixo para fazer login em sua conta
-          </CardDescription>
+          <CardTitle className="text-2xl">Esqueci minha senha</CardTitle>
+          <CardDescription>Insira e confirme sua nova senha!</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        id="email"
-                        placeholder="m@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center">
-                      <FormLabel>Senha</FormLabel>
-                      <Link
-                        to={"/reset-password/request"}
-                        className="ml-auto inline-block text-sm underline"
-                      >
-                        Esqueceu sua senha?
-                      </Link>
-                    </div>
+                    <FormLabel>Senha</FormLabel>
 
                     <FormControl>
                       <Input id="password" type="password" {...field} />
@@ -113,21 +95,37 @@ function Login() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="passwordConfirmation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confime sua senha</FormLabel>
+
+                    <FormControl>
+                      <Input
+                        id="passwordConfirmation"
+                        type="password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <CustomButton
                 type="submit"
                 className="w-full"
-                disabled={
-                  form.formState.isSubmitting || !form.formState.isValid
-                }
+                disabled={form.formState.isSubmitting}
                 isLoading={form.formState.isSubmitting}
               >
-                Acessar
+                Salvar nova senha
               </CustomButton>
 
               <div className="mt-4 text-center text-sm">
-                Não tem uma conta?{" "}
-                <Link to="/register" className="underline">
-                  Criar uma conta
+                <Link to="/login" className="underline">
+                  Voltar para login
                 </Link>
               </div>
             </form>
@@ -138,4 +136,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default ResetPassword;

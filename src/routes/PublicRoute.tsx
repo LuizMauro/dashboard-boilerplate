@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "@/pages/public/Login";
 import Home from "@/pages/public/Home";
 import Register from "@/pages/public/Register";
+import RequestResetPassword from "@/pages/public/RequestResetPassword";
+import ResetPasswordConfirmCode from "@/pages/public/ResetPasswordConfirmCode";
+import ResetPassword from "@/pages/public/ResetPassword";
 
 interface IRoute {
   path: string;
@@ -21,6 +24,18 @@ const routes: IRoute[] = [
   {
     path: "/register",
     component: <Register />,
+  },
+  {
+    path: "/reset-password",
+    component: <ResetPassword />,
+  },
+  {
+    path: "/reset-password/request",
+    component: <RequestResetPassword />,
+  },
+  {
+    path: "/reset-password/confirm-code",
+    component: <ResetPasswordConfirmCode />,
   },
   {
     path: "*",

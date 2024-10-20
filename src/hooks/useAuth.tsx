@@ -28,6 +28,9 @@ interface AuthContextData {
   signIn(credentials: SignInCredentials): Promise<void>;
   register(data: IRegister): Promise<void>;
   signOut(): void;
+  requestResetPassword(email: string): Promise<void>;
+  verifyCodeOTP(otp: string, email: string): Promise<{ resetToken: string }>;
+  resetPasswordOTP(newPassword: string, resetToken: string): Promise<void>;
   logoutLoading: boolean;
 }
 
@@ -95,13 +98,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  const requestResetPassword = useCallback(async (email: string) => {
+    await api.post<{ accessToken: string }>(
+      "/auth/request-password-reset-otp",
+      {
+        email,
+      }
+    );
+  }, []);
+
+  const verifyCodeOTP = useCallback(
+    async (otp: string, email: string): Promise<{ resetToken: string }> => {
+      const { data } = await api.post<{ result: { resetToken: string } }>(
+        "/auth/verify-otp",
+        {
+          email,
+          otp,
+        }
+      );
+
+      return data.result;
+    },
+    []
+  );
+
+  const resetPasswordOTP = useCallback(
+    async (newPassword: string, resetToken: string): Promise<void> => {
+      const { data } = await api.post("/auth/reset-password-with-otp", {
+        newPassword,
+        resetToken,
+      });
+
+      return data.result;
+    },
+    []
+  );
+
   const register = useCallback(async (data: IRegister) => {
     await api.post("/auth/register", data);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user: data.user, signIn, signOut, register, logoutLoading }}
+      value={{
+        user: data.user,
+        signIn,
+        signOut,
+        register,
+        logoutLoading,
+        requestResetPassword,
+        verifyCodeOTP,
+        resetPasswordOTP,
+      }}
     >
       {children}
     </AuthContext.Provider>

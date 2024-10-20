@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,36 +25,38 @@ import { CustomButton } from "@/components/custom-button";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  email: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  password: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
+  email: z.string().email({ message: "Por favor, insira um email válido." }),
 });
 
-function Login() {
+function RequestResetPassword() {
+  const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { requestResetPassword } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await signIn(values);
+      await requestResetPassword(values.email);
+
+      toast({
+        description: `Enviamos um código para seu email ${values.email}`,
+      });
+      navigate("/reset-password/confirm-code", {
+        state: { email: values.email },
+      });
     } catch (error) {
       console.error(error);
 
       toast({
         variant: "destructive",
         description:
-          "Falha no login. Por favor, verifique suas credenciais e tente novamente.",
+          "Falha ao solicitar redefinição de senha. Por favor, tente novamente mais tarde.",
       });
     }
   }
@@ -64,9 +66,10 @@ function Login() {
       <Card className="mx-auto max-w-sm min-w-sm">
         {/* CARD HEADER */}
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Esqueci minha senha</CardTitle>
           <CardDescription>
-            Insira seu e-mail abaixo para fazer login em sua conta
+            Insira seu e-mail que enviaremos de confirmação para redefinir sua
+            senha
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,29 +93,6 @@ function Login() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center">
-                      <FormLabel>Senha</FormLabel>
-                      <Link
-                        to={"/reset-password/request"}
-                        className="ml-auto inline-block text-sm underline"
-                      >
-                        Esqueceu sua senha?
-                      </Link>
-                    </div>
-
-                    <FormControl>
-                      <Input id="password" type="password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <CustomButton
                 type="submit"
                 className="w-full"
@@ -121,13 +101,12 @@ function Login() {
                 }
                 isLoading={form.formState.isSubmitting}
               >
-                Acessar
+                Enviar
               </CustomButton>
 
               <div className="mt-4 text-center text-sm">
-                Não tem uma conta?{" "}
-                <Link to="/register" className="underline">
-                  Criar uma conta
+                <Link to="/login" className="underline">
+                  Voltar para login
                 </Link>
               </div>
             </form>
@@ -138,4 +117,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default RequestResetPassword;
