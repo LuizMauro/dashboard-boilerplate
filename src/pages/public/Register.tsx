@@ -65,7 +65,8 @@ function Register() {
         description: "O usuário foi criado com sucesso!",
       });
       navigate("/login");
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       if (error?.data?.message) {
         if (
           Object.keys(MessagesEnum).includes(
@@ -74,7 +75,7 @@ function Register() {
         ) {
           toast({
             variant: "destructive",
-            description: MessagesEnum[error?.data?.message as MessagesEnum],
+            description: MessagesEnum[error?.data?.message as never],
           });
           return;
         }

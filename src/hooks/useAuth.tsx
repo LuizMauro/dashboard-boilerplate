@@ -34,6 +34,7 @@ interface AuthContextData {
   logoutLoading: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export enum MessagesEnum {
   "User with this email already exists" = "Este e-mail já está em uso. Por favor, tente outro.",
 }
