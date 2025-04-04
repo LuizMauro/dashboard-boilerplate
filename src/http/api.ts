@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://34.203.247.162/auth-service/",
+  baseURL: "http://auth-boilerplate.luizmauro.com",
 });
 
 api.interceptors.response.use(
